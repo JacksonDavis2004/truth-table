@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truth Table Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Truth Table Generator</h1>
+
+    <form id="truthTableForm">
+        <label for="expression">Enter Boolean Expression:</label>
+
+        <ul>
+            <li>Use any letter for your variable(s)</li>
+            <li>Operators: NOT, AND, OR, IMP, IFF</li>
+            <li>Use parentheses for optimal outputs</li>
+        </ul>
+
+        <label>
+            <input type="checkbox" id="showSubEquations"> Show Sub-Equations
+        </label>
+        
+        <input type="text" id="expression" name="expression" required>
+      
+        <button type="submit">Generate Truth Table</button>
+    </form>      
+
+    <table id="truthTable">
+        <thead>
+            <tr id="tableHeader">
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script src="script.js"></script>
+</body>
+</html>
