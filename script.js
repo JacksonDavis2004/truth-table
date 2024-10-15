@@ -1,3 +1,8 @@
+// Custom implication function
+function implication(A, B) {
+    return !A || B;
+}
+
 document.getElementById('truthTableForm').addEventListener('submit', function(event) {
     event.preventDefault();
     let expression = document.getElementById('expression').value;
@@ -6,7 +11,7 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
     let evalExpression = expression.replace(/\bAND\b/g, '&&')
                                    .replace(/\bOR\b/g, '||')
                                    .replace(/\bNOT\b/g, '!')
-                                   .replace(/\bIMP\b/g, '|| !')
+                                   .replace(/(\([^()]+\)|[A-Za-z]+)\s*IMP\s*([A-Za-z()]+)/g, 'implication($1, $2)')
                                    .replace(/\bIFF\b/g, ' === ');
 
     const variables = Array.from(new Set(expression.match(/\b[A-Za-z]\b/g))).sort();
@@ -14,17 +19,18 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
     const tableHeader = document.querySelector('#tableHeader');
     tableBody.innerHTML = '';
     tableHeader.innerHTML = '';
+
     variables.forEach(variable => {
         const th = document.createElement('th');
         th.innerText = variable;
         tableHeader.appendChild(th);
     });
+
     let subExpressions = [];
     if (showSubEquations) {
         subExpressions = extractSubExpressions(expression);
         subExpressions.forEach(subExpr => {
             const th = document.createElement('th');
-
             let symbolicSubExpr = subExpr.replace(/\bAND\b/g, '∧')
                                          .replace(/\bOR\b/g, '∨')
                                          .replace(/\bNOT\b/g, '¬')
@@ -34,6 +40,7 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
             tableHeader.appendChild(th);
         });
     }
+
     const resultHeader = document.createElement('th');
     resultHeader.innerText = expression.replace(/\bAND\b/g, '∧')
                                        .replace(/\bOR\b/g, '∨')
@@ -41,6 +48,7 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
                                        .replace(/\bIMP\b/g, '→')
                                        .replace(/\bIFF\b/g, '↔');
     tableHeader.appendChild(resultHeader);
+
     const rows = Math.pow(2, variables.length);
     for (let i = 0; i < rows; i++) {
         const values = [];
@@ -50,6 +58,7 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
             values.push(bin[j] === '1');
             row += `<td>${bin[j]}</td>`;
         }
+
         let subExprResults = {};
         if (showSubEquations) {
             subExpressions.forEach((subExpr, index) => {
@@ -57,11 +66,13 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
                 variables.forEach((variable, index) => {
                     currentSubExpr = currentSubExpr.replace(new RegExp('\\b' + variable + '\\b', 'g'), values[index] ? 'true' : 'false');
                 });
+
                 currentSubExpr = currentSubExpr.replace(/\bAND\b/g, '&&')
                                                .replace(/\bOR\b/g, '||')
                                                .replace(/\bNOT\b/g, '!')
-                                               .replace(/\bIMP\b/g, '|| !')
+                                               .replace(/(\([^()]+\)|[A-Za-z]+)\s*IMP\s*([A-Za-z()]+)/g, 'implication($1, $2)')
                                                .replace(/\bIFF\b/g, ' === ');
+
                 try {
                     const subResult = eval(currentSubExpr);
                     subExprResults[`EXPR${index}`] = subResult;
@@ -72,23 +83,29 @@ document.getElementById('truthTableForm').addEventListener('submit', function(ev
                 }
             });
         }
+
         let currentEvalExpression = evalExpression;
         variables.forEach((variable, index) => {
             currentEvalExpression = currentEvalExpression.replace(new RegExp('\\b' + variable + '\\b', 'g'), values[index] ? 'true' : 'false');
         });
+
         for (const [key, value] of Object.entries(subExprResults)) {
             currentEvalExpression = currentEvalExpression.replace(new RegExp('\\b' + key + '\\b', 'g'), value ? 'true' : 'false');
         }
+
         try {
             const result = eval(currentEvalExpression);
-            row += `<td>${result ? 1 : 0}</td>`;
+
+            const finalCellStyle = result 
+                ? 'background-color: rgba(144, 238, 144, 0.5);'
+                : 'background-color: rgba(240, 128, 128, 0.5);';
+            row += `<td style="${finalCellStyle}">${result ? 1 : 0}</td>`;
         } catch (error) {
-            row += `<td>0</td>`;
+            row += `<td style="background-color: rgba(240, 128, 128, 0.3);">0</td>`;
         }
         row += `</tr>`;
         tableBody.innerHTML += row;
     }
-
     removeExprColumns();
 });
 
@@ -118,6 +135,7 @@ function extractSubExpressions(expression) {
         subExpressions.push(`NOT ${p1}`);
         return `!${p1}`;
     });
+
     while (expressionCopy.includes('(')) {
         let startIdx = expressionCopy.lastIndexOf('(');
         let endIdx = expressionCopy.indexOf(')', startIdx);
@@ -126,7 +144,7 @@ function extractSubExpressions(expression) {
             subExpr = subExpr.replace(/\bAND\b/g, '&&')
                              .replace(/\bOR\b/g, '||')
                              .replace(/\bNOT\b/g, '!')
-                             .replace(/\bIMP\b/g, '|| !')
+                             .replace(/(\([^()]+\)|[A-Za-z]+)\s*IMP\s*([A-Za-z()]+)/g, 'implication($1, $2)')
                              .replace(/\bIFF\b/g, ' === ');
             subExpressions.push(subExpr);
             expressionCopy = expressionCopy.slice(0, startIdx) + `EXPR${subExpressions.length - 1}` + expressionCopy.slice(endIdx + 1);
